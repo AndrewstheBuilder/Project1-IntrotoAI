@@ -182,8 +182,8 @@ class State:
     def __gt__(s1, s2):
         """
         :return - boolean if s1.getState is greater
-        lexigographically than s2.getState
-        return True else false
+        lexigographically than s2.getState:
+            return True else: return False
         """
         if s1.getState() > s2.getState():
             return True
