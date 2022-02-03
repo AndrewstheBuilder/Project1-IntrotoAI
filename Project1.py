@@ -113,8 +113,6 @@ def calculateRho(r1,r2,orderedStateNames):
     for name in orderedStateNames:
         d1 = sequentialSearch(r1,name)
         d2 = sequentialSearch(r2,name)
-        # if(d1 == -1 or d2 == -1):
-        #     print('not found? d1,d2 ', d1,d2)
         dSum += pow((d1-d2),2)
     denominator = 50*(pow(50,2)-1)
     rho = 1-((6*dSum)/denominator)
@@ -135,16 +133,6 @@ def calculateSpearmanRhoMatrix(statesList):
     sortedMHIList = sorted(statesList,key=attrgetter('MHI','state'))
     sortedVCRList = sorted(statesList,key=attrgetter('VCR','state'))
     sortedFVRList = sorted(statesList,key=attrgetter('FVR','state'))
-    # print('Sorted by case rate')
-    # printStatesReport(sortedCaseRateList)
-    # print('Sorted by death rate')
-    # printStatesReport(sortedDeathRateList)
-    # print('Sorted by MHI')
-    # printStatesReport(sortedMHIList)
-    # print('Sorted by VCR')
-    # printStatesReport(sortedVCRList)
-    # print('Sorted by FVR')
-    # printStatesReport(sortedFVRList)
 
     x1 = "{:.3f}".format(calculateRho(sortedCaseRateList,sortedMHIList,seqStateNames))
     x2 = "{:.3f}".format(calculateRho(sortedCaseRateList,sortedVCRList,seqStateNames))
@@ -232,12 +220,7 @@ def main():
         for line in lines:
             if(line[0] != 'State'):
                 state,capitol,region,UHS,population,covidCases,covidDeaths,FVR,MHI,VCR = [line[x] for x in range(0,len(line))]
-                #print(state,capitol,region,UHS,population,covidCases,covidDeaths,FVR,MHI,VCR)
                 statesList.append(State.State(state,capitol,region,UHS,population,covidCases,covidDeaths,FVR,MHI,VCR))
-        """
-        for state in statesList:
-            print(state)
-        """
         print('\nThere were '+str(len(statesList))+' states read from the csv.\n')
         choice = -1
         sorted = False
