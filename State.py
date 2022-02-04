@@ -32,11 +32,12 @@ class State:
         self.population = population
         self.covidCases = covidCases
         self.covidDeaths = covidDeaths
-        self.FVR = FVR
-        self.MHI = MHI
-        self.VCR = VCR
+        self.FVR = float(FVR)
+        self.MHI = int(MHI)
+        self.VCR = float(VCR)
         self.caseRate = (int(covidCases)/int(population))*100000
         self.deathRate = (int(covidDeaths)/int(population))*100000
+        self.CFR = int(self.getCovidDeaths())/int(self.getCovidCases())
 
     def getState(self):
         """
@@ -141,7 +142,7 @@ class State:
         """
         :return Median Household Income int
         """
-        return self.MHI
+        return str(self.MHI)
 
     def setMHI(self, MHI):
         """
@@ -153,7 +154,7 @@ class State:
         """
         :return violent crime rates
         """
-        return self.VCR
+        return str(self.VCR)
 
     def setVCR(self, VCR):
         """
@@ -177,7 +178,7 @@ class State:
         """
         :return covid fatality rate
         """
-        return "{:.6f}".format(int(self.getCovidDeaths())/int(self.getCovidCases()))
+        return "{:.6f}".format(self.CFR)
 
     def __gt__(s1, s2):
         """
