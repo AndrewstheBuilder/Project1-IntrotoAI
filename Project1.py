@@ -1,4 +1,5 @@
 import State
+import copy
 import csv
 from operator import attrgetter
 """
@@ -11,6 +12,7 @@ Version: 1/30/22
 Email: n01364109@unf.edu
 """
 
+
 def printStatesReport(statesList):
     """
     :param statesList - list of state objects
@@ -21,25 +23,27 @@ def printStatesReport(statesList):
     for state in statesList:
         print(f"{state.getState():15s}{state.getMHI():15s}{state.getVCR():15s}{state.getCFR():15s}{state.getCaseRate():15s}{state.getDeathRate():15s}{state.getFVR():15s}")
 
+
 def sortByStateName(statesList, start, end):
     """
-    :param statesList - list of state objects, start - start of array,
-    :param end - initialized in the beginning to len(statesList)-1
+    :param statesList - list of state objects, start - start of array.
+    :param end - initialized in the beginning to len(statesList)-1.
     sort list of state objects by state name
     implemented using quick sort
     """
     if start < end:
         pivotValue = statesList[end]
         pivotIndex = start
-        for i in range(start,end+1):
+        for i in range(start, end+1):
             if statesList[i].getState() <= pivotValue.getState():
                 temp = statesList[i]
                 statesList[i] = statesList[pivotIndex]
                 statesList[pivotIndex] = temp
                 pivotIndex += 1
         pivotIndex -= 1
-        sortByStateName(statesList,start,pivotIndex-1)
-        sortByStateName(statesList,pivotIndex+1,end)
+        sortByStateName(statesList, start, pivotIndex-1)
+        sortByStateName(statesList, pivotIndex+1, end)
+
 
 def sortByCFR(statesList):
     """
@@ -53,7 +57,7 @@ def sortByCFR(statesList):
         rightList = statesList[mid:]
         sortByCFR(leftList)
         sortByCFR(rightList)
-        x=y=z=0
+        x = y = z = 0
 
         while x < len(leftList) and y < len(rightList):
             if leftList[x].getCFR() < rightList[y].getCFR():
@@ -74,6 +78,51 @@ def sortByCFR(statesList):
             y += 1
             z += 1
 
+
+def mergeSort(sList, sortBy):
+    """
+    sort by different attributes like CFR, VCR, stateName, etc
+    """
+    if len(sList) > 1:
+        mid = len(sList)//2
+        leftList = sList[:mid]
+        rightList = sList[mid:]
+        mergeSort(leftList, sortBy)
+        mergeSort(rightList, sortBy)
+        x = y = z = 0
+
+        while x < len(leftList) and y < len(rightList):
+
+            # if values are equal change conditonal to compare by state name
+            leftVar = getattr(leftList[x], sortBy)
+            rightVar = getattr(rightList[y], sortBy)
+            conditional = False
+
+            if(leftVar == rightVar):
+                leftState = getattr(leftList[x], 'state')
+                rightState = getattr(rightList[y], 'state')
+                conditional =  (leftState < rightState)
+            else:
+                conditional = (leftVar < rightVar)
+            if conditional:
+                sList[z] = leftList[x]
+                x += 1
+            else:
+                sList[z] = rightList[y]
+                y += 1
+            z += 1
+
+        while x < len(leftList):
+            sList[z] = leftList[x]
+            x += 1
+            z += 1
+
+        while y < len(rightList):
+            sList[z] = rightList[y]
+            y += 1
+            z += 1
+
+
 def binarySearch(statesList, start, end, state):
     """
     find state name in list by
@@ -85,36 +134,38 @@ def binarySearch(statesList, start, end, state):
             print(statesList[mid])
             return
         elif statesList[mid].getState() > state:
-            return binarySearch(statesList,start,mid-1,state)
+            return binarySearch(statesList, start, mid-1, state)
         else:
-            return binarySearch(statesList,mid+1,end,state)
+            return binarySearch(statesList, mid+1, end, state)
     else:
-        print(state +' not found')
+        print(state + ' not found')
         return
+
 
 def sequentialSearch(statesList, state):
     """
     sequential search for state in statesList
     :return position of state if found
     """
-    for i in range(0,len(statesList)):
+    for i in range(0, len(statesList)):
         if statesList[i].getState().lower() == state.lower():
             return i
     return -1
 
-def calculateRho(r1,r2,orderedStateNames):
+
+def calculateRho(r1, r2, orderedStateNames):
     """
     :return rho value between two rankings
     :param r1 - first ranking ordered by caseRate or deathRate
     :param r2 - second ranking ordered by MHI, VCR, or FVR
     :param orderedStateNames - reference list for ordering of state name
     """
-    dSum= 0
+    dSum = 0
     for name in orderedStateNames:
-        d1 = sequentialSearch(r1,name)
-        d2 = sequentialSearch(r2,name)
-        dSum += pow((d1-d2),2)
-    denominator = 50*(pow(50,2)-1)
+        d1 = sequentialSearch(r1, name)
+        d2 = sequentialSearch(r2, name)
+        dSum += pow((d1-d2), 2)
+    denominator = 50*(pow(50, 2)-1)
     rho = 1-((6*dSum)/denominator)
     return rho
 
@@ -123,23 +174,51 @@ def calculateSpearmanRhoMatrix(statesList):
     """
     :return string of spearmanrho matrix after its calculated
     """
-    sortedStateNameList = sorted(statesList,key=attrgetter('state'))
+
+    # Initialize lists for calculating rho
+    sortedStateNameList = []
+    sortedCaseRateList = []
+    sortedDeathRateList = []
+    sortedMHIList = []
+    sortedVCRList = []
+    sortedFVRList = []
+
+    for state in statesList:
+        sortedStateNameList.append(State.State(state.getState(), state.getCapitol(), state.getRegion(), state.getUHS(),
+                                               state.getPopulation(), state.getCovidCases(), state.getCovidDeaths(), state.getFVR(), state.getMHI(), state.getVCR()))
+        sortedCaseRateList.append(State.State(state.getState(), state.getCapitol(), state.getRegion(), state.getUHS(),
+                                               state.getPopulation(), state.getCovidCases(), state.getCovidDeaths(), state.getFVR(), state.getMHI(), state.getVCR()))
+        sortedDeathRateList.append(State.State(state.getState(), state.getCapitol(), state.getRegion(), state.getUHS(),
+                                               state.getPopulation(), state.getCovidCases(), state.getCovidDeaths(), state.getFVR(), state.getMHI(), state.getVCR()))
+        sortedMHIList.append(State.State(state.getState(), state.getCapitol(), state.getRegion(), state.getUHS(),
+                                               state.getPopulation(), state.getCovidCases(), state.getCovidDeaths(), state.getFVR(), state.getMHI(), state.getVCR()))
+        sortedVCRList.append(State.State(state.getState(), state.getCapitol(), state.getRegion(), state.getUHS(),
+                                               state.getPopulation(), state.getCovidCases(), state.getCovidDeaths(), state.getFVR(), state.getMHI(), state.getVCR()))
+        sortedFVRList.append(State.State(state.getState(), state.getCapitol(), state.getRegion(), state.getUHS(),
+                                               state.getPopulation(), state.getCovidCases(), state.getCovidDeaths(), state.getFVR(), state.getMHI(), state.getVCR()))
+
+    sortByStateName(sortedStateNameList, 0, (len(statesList)-1))
     seqStateNames = []
     for stateObj in sortedStateNameList:
         seqStateNames.append(stateObj.getState())
+    mergeSort(sortedCaseRateList, 'caseRate')
+    mergeSort(sortedDeathRateList, 'deathRate')
+    mergeSort(sortedMHIList, 'MHI')
+    mergeSort(sortedVCRList, 'VCR')
+    mergeSort(sortedFVRList, 'FVR')
 
-    sortedCaseRateList = sorted(statesList,key=attrgetter('caseRate','state'))
-    sortedDeathRateList = sorted(statesList,key=attrgetter('deathRate','state'))
-    sortedMHIList = sorted(statesList,key=attrgetter('MHI','state'))
-    sortedVCRList = sorted(statesList,key=attrgetter('VCR','state'))
-    sortedFVRList = sorted(statesList,key=attrgetter('FVR','state'))
-
-    x1 = "{:.3f}".format(calculateRho(sortedCaseRateList,sortedMHIList,seqStateNames))
-    x2 = "{:.3f}".format(calculateRho(sortedCaseRateList,sortedVCRList,seqStateNames))
-    x3 = "{:.3f}".format(calculateRho(sortedCaseRateList,sortedFVRList,seqStateNames))
-    x4 = "{:.3f}".format(calculateRho(sortedDeathRateList,sortedMHIList,seqStateNames))
-    x5 = "{:.3f}".format(calculateRho(sortedDeathRateList,sortedVCRList,seqStateNames))
-    x6 = "{:.3f}".format(calculateRho(sortedDeathRateList,sortedFVRList,seqStateNames))
+    x1 = "{:.3f}".format(calculateRho(
+        sortedCaseRateList, sortedMHIList, seqStateNames))
+    x2 = "{:.3f}".format(calculateRho(
+        sortedCaseRateList, sortedVCRList, seqStateNames))
+    x3 = "{:.3f}".format(calculateRho(
+        sortedCaseRateList, sortedFVRList, seqStateNames))
+    x4 = "{:.3f}".format(calculateRho(
+        sortedDeathRateList, sortedMHIList, seqStateNames))
+    x5 = "{:.3f}".format(calculateRho(
+        sortedDeathRateList, sortedVCRList, seqStateNames))
+    x6 = "{:.3f}".format(calculateRho(
+        sortedDeathRateList, sortedFVRList, seqStateNames))
     new_line = '\n'
     separator = '-------------------------------------------------------------------------------------------------'
     matrix = f"{new_line}{separator}\
@@ -151,6 +230,7 @@ def calculateSpearmanRhoMatrix(statesList):
 {separator}{new_line}"
 
     return matrix
+
 
 def main():
     """
@@ -219,23 +299,26 @@ def main():
         lines = csv.reader(file)
         for line in lines:
             if(line[0] != 'State'):
-                state,capitol,region,UHS,population,covidCases,covidDeaths,FVR,MHI,VCR = [line[x] for x in range(0,len(line))]
-                statesList.append(State.State(state,capitol,region,UHS,population,covidCases,covidDeaths,FVR,MHI,VCR))
-        print('\nThere were '+str(len(statesList))+' states read from the csv.\n')
+                state, capitol, region, UHS, population, covidCases, covidDeaths, FVR, MHI, VCR = [
+                    line[x] for x in range(0, len(line))]
+                statesList.append(State.State(
+                    state, capitol, region, UHS, population, covidCases, covidDeaths, FVR, MHI, VCR))
+        print('\nThere were '+str(len(statesList)) +
+              ' states read from the csv.\n')
         choice = -1
         sorted = False
         while choice != '6':
             print('1. Print a state report\n2. Sort by state name\n3. Sort by case fatality rate\n4. Find and print a State for a given name\n5. Print Spearman\'s rho matrix\n6. Quit')
             choice = input('Enter a choice:')
             if(choice.isdigit() == False or int(choice) < 1 or int(choice) > 6):
-                print('Invalid choice:',choice)
+                print('Invalid choice:', choice)
                 print()
             else:
                 if(choice == '1'):
                     printStatesReport(statesList)
                 elif(choice == '2'):
                     """statesList ="""
-                    sortByStateName(statesList,0,len(statesList)-1)
+                    sortByStateName(statesList, 0, len(statesList)-1)
                     print('States sorted by Name.\n')
                     sorted = True
                 elif(choice == '3'):
@@ -246,14 +329,15 @@ def main():
                     stateToSearch = input('Enter State name:')
                     if(sorted):
                         print('Binary Search\n')
-                        binarySearch(statesList,0,len(statesList)-1,stateToSearch)
+                        binarySearch(statesList, 0, len(
+                            statesList)-1, stateToSearch)
                     else:
                         print('Sequential Search\n')
                         pos = sequentialSearch(statesList, stateToSearch)
                         if(pos != -1):
                             print(statesList[pos])
                         else:
-                            print(stateToSearch +' not found')
+                            print(stateToSearch + ' not found')
                 elif(choice == '5'):
                     print(calculateSpearmanRhoMatrix(statesList))
 
@@ -261,5 +345,6 @@ def main():
     except IOError:
         print("Cannot open States.csv")
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     main()
